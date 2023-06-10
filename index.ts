@@ -24,13 +24,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/ls', (req, res) => {
-  const output = execSync('ls -la');
-  console.log('output:', output);
-  const outputString = output.toString();
-  console.log('str:', outputString);
+  const path = req.query.path || '.';
+  const output = execSync(`ls -F ${path}`);
 
-  res.json({ output: output.toString() });
-  //   res.send(output.toString());
+  res.send(output.toString());
 });
 
 app.get('/size', (req, res) => {
