@@ -5,21 +5,38 @@ import express from 'express';
 const app = express();
 const port = 3000;
 
-import { exec } from 'child_process';
-exec('ls -la', (error, stdout, stderr) => {
-  if (error) {
-    console.log(`error: ${error.message}`);
-    return;
-  }
-  if (stderr) {
-    console.log(`stderr: ${stderr}`);
-    return;
-  }
-  console.log(`stdout: ${stdout}`);
-});
+import { execSync } from 'child_process';
+
+// exec('ls -la', (error, stdout, stderr) => {
+//   if (error) {
+//     console.log(`error: ${error.message}`);
+//     return;
+//   }
+//   if (stderr) {
+//     console.log(`stderr: ${stderr}`);
+//     return;
+//   }
+//   console.log(`stdout: ${stdout}`);
+// });
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
+});
+
+app.get('/ls', (req, res) => {
+  const output = execSync('ls -la');
+  console.log('output:', output);
+  const outputString = output.toString();
+  console.log('str:', outputString);
+
+  res.json({ output: output.toString() });
+  //   res.send(output.toString());
+});
+
+app.get('/size', (req, res) => {
+  const output = execSync('du -sh ./prisma/generated/client1');
+
+  res.json({ output: output.toString() });
 });
 
 app.listen(port, () => {
