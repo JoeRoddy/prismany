@@ -34,7 +34,8 @@ app.get('/ls', (req, res) => {
 });
 
 app.get('/size', (req, res) => {
-  const output = execSync('du -sh ./prisma/generated/client1');
+  const path = req.query.path || '.';
+  const output = execSync(`du -sh ${path}`);
 
   res.json({ output: output.toString() });
 });
