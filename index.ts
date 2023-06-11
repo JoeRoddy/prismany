@@ -37,6 +37,14 @@ app.get('/size', (req, res) => {
   res.json({ output: output.toString() });
 });
 
+app.get('/generate-client', (req, res) => {
+  const clientId = req.query.clientId;
+  if (!clientId) return res.status(400).json({ error: 'clientId is required' });
+  const output = execSync(`yarn prisma generate --schema prisma/clients/schemas/${clientId}.prisma`);
+
+  res.json({ output: output.toString() });
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
