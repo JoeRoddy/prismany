@@ -24,10 +24,7 @@ try {
       console.log('gen output:', prismaGenerateOutput.toString());
       console.log('match:', prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/));
 
-      const clientPath = prismaGenerateOutput
-        .toString()
-        .match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)
-        ?.at(0);
+      const clientPath = prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)?.[0];
       if (!clientPath) return;
 
       if (!sharedEngineCreated) {
