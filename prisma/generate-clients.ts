@@ -18,6 +18,7 @@ try {
   files
     .filter((f) => f.endsWith('.prisma'))
     .forEach((file) => {
+      generateCount++;
       if (file === 'schema.prisma') return execSync(`npx prisma generate`);
       const prismaGenerateOutput = execSync(`npx prisma generate --schema ${directoryPath}/${file}`);
       const clientPath = prismaGenerateOutput
@@ -85,7 +86,6 @@ try {
         `export {\n  ${customClientName},`,
       );
       writeFileSync(clientIndexPath, dbIndexContents);
-      generateCount++;
     });
 
   console.log(`Successfully generated ${generateCount} clients!`);
