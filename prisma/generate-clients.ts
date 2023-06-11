@@ -4,15 +4,17 @@ import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, w
 const directoryPath = './prisma';
 execSync(`rm -rf ./prisma/clients/`);
 mkdirSync(`${directoryPath}/clients/shared`, { recursive: true });
+const clientIndexPath = `${directoryPath}/clients/index.ts`;
+writeFileSync(clientIndexPath, `export {\n\n}`);
 
 let sharedEngineCreated = false;
 let sharedRuntimeCreated = false;
 let enginePath = '';
+let generateCount = 0;
 
 try {
   // Read all files in the directory
   const files = readdirSync(directoryPath);
-  console.log('files:', files);
   files
     .filter((f) => f.endsWith('.prisma'))
     .forEach((file) => {
@@ -76,8 +78,17 @@ try {
           `export type DefaultPrismaClient = ${customClientName}`,
         );
       writeFileSync(typesFilePath, clientTypesContent);
+
+      let dbIndexContents = readFileSync(clientIndexPath).toString();
+      dbIndexContents = `import {${customClientName}} from './${schemaName}/index.js';\n${dbIndexContents}`.replace(
+        /export {/g,
+        `export {\n  ${customClientName},`,
+      );
+      writeFileSync(clientIndexPath, dbIndexContents);
+      generateCount++;
     });
-  console.log('done');
+
+  console.log(`Successfully generated ${generateCount} clients!`);
 } catch (err) {
   console.error('Error reading directory:', err);
 }

@@ -1,25 +1,12 @@
 console.log('hello world!!!!!');
 
 import express from 'express';
-import { PrismaClientDb1 } from './prisma/clients/db1';
-import { PrismaClientDb2 } from './prisma/clients/db2';
 
 const app = express();
 const port = 3000;
 
 import { execSync } from 'child_process';
-
-// exec('ls -la', (error, stdout, stderr) => {
-//   if (error) {
-//     console.log(`error: ${error.message}`);
-//     return;
-//   }
-//   if (stderr) {
-//     console.log(`stderr: ${stderr}`);
-//     return;
-//   }
-//   console.log(`stdout: ${stdout}`);
-// });
+import { PrismaClientDb1, PrismaClientDb2 } from './prisma/clients';
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
