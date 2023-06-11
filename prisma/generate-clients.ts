@@ -47,7 +47,10 @@ try {
       }
 
       // change client/index.js references to runtime and engine to point to shared
-      const clientIndexContents = readFileSync(`${clientPath}/index.js`)
+      const schemaName = file.split('.')[0];
+      const customClientName = `PrismaClient${schemaName.charAt(0).toUpperCase() + schemaName.slice(1)}`;
+      const indexFilePath = `${clientPath}/index.js`;
+      const clientIndexContents = readFileSync(indexFilePath)
         .toString()
         .replaceAll(/\.\/runtime/g, '../shared/runtime')
         .replaceAll(
@@ -57,8 +60,22 @@ try {
         .replaceAll(
           /path\.join\(process\.cwd\(\), "prisma\/clients\/.+?\/libquery_engine-.+?\.dylib\.node"\)/g,
           `path.join(__dirname, "${enginePath}");`,
+        )
+        // change client name so they're not all "PrismaClient"
+        .replaceAll(/const PrismaClient =/g, `const ${customClientName} =`)
+        .replaceAll(/exports\.PrismaClient = PrismaClient/g, `exports.${customClientName} = ${customClientName}`);
+      writeFileSync(indexFilePath, clientIndexContents);
+
+      // mirror custom client name from index.js to index.d.ts
+      const typesFilePath = `${clientPath}/index.d.ts`;
+      const clientTypesContent = readFileSync(typesFilePath)
+        .toString()
+        .replace(/export class PrismaClient</g, `export class ${customClientName}<`)
+        .replace(
+          /export type DefaultPrismaClient = PrismaClient/g,
+          `export type DefaultPrismaClient = ${customClientName}`,
         );
-      writeFileSync(`${clientPath}/index.js`, clientIndexContents);
+      writeFileSync(typesFilePath, clientTypesContent);
     });
   console.log('done');
 } catch (err) {

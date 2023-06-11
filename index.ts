@@ -1,8 +1,8 @@
 console.log('hello world!!!!!');
 
 import express from 'express';
-import { PrismaClient as PrismaClient1 } from './prisma/clients/client1';
-import { PrismaClient as PrismaClient2 } from './prisma/clients/client2';
+import { PrismaClientDb1 } from './prisma/clients/db1';
+import { PrismaClientDb2 } from './prisma/clients/db2';
 
 const app = express();
 const port = 3000;
@@ -51,8 +51,8 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 
-const client1 = new PrismaClient1();
-const client2 = new PrismaClient2();
+const client1 = new PrismaClientDb1();
+const client2 = new PrismaClientDb2();
 
 async function main() {
   const r1 = await client1.client1.findFirst();

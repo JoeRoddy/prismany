@@ -1,18 +1,15 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
     provider = "prisma-client-js"
-    output   = "clients/client1"
+    output   = "clients/db2"
 }
 
 datasource db {
     provider = "postgresql"
-    url      = env("CLIENT_1_URL")
+    url      = env("CLIENT_2_URL")
 }
 
-model Client1 {
-    clientOneProp String
+model Client2 {
+    clientTwoProp String
 
     id        String   @id @default(cuid())
     createdAt DateTime @default(now())
