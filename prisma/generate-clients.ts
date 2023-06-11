@@ -21,6 +21,9 @@ try {
       generateCount++;
       if (file === 'schema.prisma') return execSync(`npx prisma generate`);
       const prismaGenerateOutput = execSync(`npx prisma generate --schema ${directoryPath}/${file}`);
+      console.log('gen output:', prismaGenerateOutput.toString());
+      console.log('match:', prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/));
+
       const clientPath = prismaGenerateOutput
         .toString()
         .match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)
