@@ -2,10 +2,14 @@ import { execSync } from 'child_process';
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 
 const directoryPath = './prisma';
-execSync(`rm -rf ./prisma/clients/`);
-mkdirSync(`${directoryPath}/clients/shared`, { recursive: true });
-const clientIndexPath = `${directoryPath}/clients/index.ts`;
-writeFileSync(clientIndexPath, `export {\n\n}`);
+const outputPath = 'node_modules/prismany';
+
+execSync(`rm -rf ${outputPath}`);
+mkdirSync(`${outputPath}/clients/shared`, { recursive: true });
+const clientIndexPathTs = `${outputPath}/index.ts`;
+const clientIndexPathJs = `${outputPath}/index.js`;
+writeFileSync(clientIndexPathJs, `module.exports = {\n\n}`);
+writeFileSync(clientIndexPathTs, `export {\n\n}`);
 
 let sharedEngineCreated = false;
 let sharedRuntimeCreated = false;
@@ -17,19 +21,34 @@ try {
   const files = readdirSync(directoryPath);
   files
     .filter((f) => f.endsWith('.prisma'))
-    .forEach((file) => {
-      generateCount++;
-      if (file === 'schema.prisma') return execSync(`npx prisma generate`);
-      const prismaGenerateOutput = execSync(`npx prisma generate --schema ${directoryPath}/${file}`);
-      console.log('gen output:', prismaGenerateOutput.toString());
-      console.log('match:', prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/));
+    .forEach((prismaFile) => {
+      if (prismaFile === 'schema.prisma') {
+        generateCount++;
 
+        return execSync(`npx prisma generate`);
+      }
+      const schemaName = prismaFile.split('.')[0];
+      const schemaContent = readFileSync(`${directoryPath}/${prismaFile}`).toString();
+      const outputMatch = schemaContent.match(/(?<=output\s+=\s+")(.*)(?=")/);
+      if (!outputMatch) {
+        if (!/generator client\s?{/g.test(schemaContent)) {
+          return console.error(`Invalid schema file ${prismaFile}: missing generator client block`);
+        }
+        const newSchemaContent = schemaContent.replace(
+          /(generator client {)/,
+          `$1\n  output = "../${outputPath}/clients/${schemaName}"`,
+        );
+        writeFileSync(`${directoryPath}/${prismaFile}`, newSchemaContent);
+        console.log(`Adding output directory to ${prismaFile}`);
+      }
+
+      const prismaGenerateOutput = execSync(`npx prisma generate --schema ${directoryPath}/${prismaFile}`);
       const clientPath = prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)?.[0];
-      if (!clientPath) return;
+      if (!clientPath) return console.error(`Error parsing client path from prisma generate output`);
 
       if (!sharedEngineCreated) {
         const engineFile = readdirSync(clientPath).find((f) => f.startsWith('libquery_engine-'));
-        enginePath = `${directoryPath}/clients/shared/${engineFile}`;
+        enginePath = `${outputPath}/clients/shared/${engineFile}`;
         renameSync(`${clientPath}/${engineFile}`, enginePath);
         sharedEngineCreated = true;
       } else {
@@ -37,20 +56,19 @@ try {
       }
 
       if (!sharedRuntimeCreated) {
-        renameSync(`${clientPath}/runtime`, `${directoryPath}/clients/shared/runtime`);
-        const runtimeLibContents = readFileSync(`${directoryPath}/clients/shared/runtime/library.js`).toString();
+        renameSync(`${clientPath}/runtime`, `${outputPath}/clients/shared/runtime`);
+        const runtimeLibContents = readFileSync(`${outputPath}/clients/shared/runtime/library.js`).toString();
         const newRuntimeLibContents = runtimeLibContents.replace(
           /let \w+?={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}\[e\]\?\?t.prismaPath;/,
           `let r='${enginePath}';`,
         );
-        writeFileSync(`${directoryPath}/clients/shared/runtime/library.js`, newRuntimeLibContents);
+        writeFileSync(`${outputPath}/clients/shared/runtime/library.js`, newRuntimeLibContents);
         sharedRuntimeCreated = true;
       } else {
         rmSync(`${clientPath}/runtime`, { recursive: true });
       }
 
       // change client/index.js references to runtime and engine to point to shared
-      const schemaName = file.split('.')[0];
       const customClientName = `PrismaClient${schemaName.charAt(0).toUpperCase() + schemaName.slice(1)}`;
       const indexFilePath = `${clientPath}/index.js`;
       const clientIndexContents = readFileSync(indexFilePath)
@@ -80,12 +98,23 @@ try {
         );
       writeFileSync(typesFilePath, clientTypesContent);
 
-      let dbIndexContents = readFileSync(clientIndexPath).toString();
-      dbIndexContents = `import {${customClientName}} from './${schemaName}/index.js';\n${dbIndexContents}`.replace(
-        /export {/g,
-        `export {\n  ${customClientName},`,
-      );
-      writeFileSync(clientIndexPath, dbIndexContents);
+      let dbIndexContentsTs = readFileSync(clientIndexPathTs).toString();
+      dbIndexContentsTs =
+        `import {${customClientName}} from './clients/${schemaName}/index.js';\n${dbIndexContentsTs}`.replace(
+          /export {/g,
+          `export {\n  ${customClientName},`,
+        );
+      writeFileSync(clientIndexPathTs, dbIndexContentsTs);
+
+      let dbIndexContentsJs = readFileSync(clientIndexPathJs).toString();
+      dbIndexContentsJs =
+        `const {${customClientName}} = require('./clients/${schemaName}/index.js');\n${dbIndexContentsJs}`.replace(
+          /module.exports\s?=\s?{/g,
+          `module.exports = {\n  ${customClientName},`,
+        );
+      writeFileSync(clientIndexPathJs, dbIndexContentsJs);
+
+      generateCount++;
     });
 
   console.log(`Successfully generated ${generateCount} clients!`);

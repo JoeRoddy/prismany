@@ -7,7 +7,7 @@ const port = 3000;
 
 import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
-import { PrismaClientDb1, PrismaClientDb2 } from './prisma/clients';
+import { PrismaClientDb1, PrismaClientDb2 } from 'prismany';
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
@@ -39,17 +39,13 @@ app.get('/prisma', async (req, res) => {
   const client1 = new PrismaClientDb1();
   const client2 = new PrismaClientDb2();
   const prisma = new PrismaClient();
-
   const r1 = await client1.client1.findFirst();
   console.log('c1:', r1);
-
-  const r2 = await client2.client2.findFirst();
+  const r2 = await client2.client2.findFirst({});
   console.log('c2:', r2);
-
   const pRes = await prisma.user.findMany();
-  console.log('prisma:', res);
+  console.log('prisma:', pRes);
   res.json({ client1Res: r1, client2Res: r2, prismaRes: pRes });
-
   client1.$disconnect();
   client2.$disconnect();
   prisma.$disconnect();
