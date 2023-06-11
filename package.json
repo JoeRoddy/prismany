@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --respawn -- index.ts",
     "ppush": "dotenv -e .env -- yarn prisma db push",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc && node ./dist/prisma/generate-clients.js",
+    "build": "npm run generate-all && npx tsc",
     "generate-all": "npx ts-node-dev -- ./prisma/generate-clients.ts",
     "start": "node ./dist/index.js"
   },
