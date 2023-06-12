@@ -1,5 +1,7 @@
-node_modules
-# Keep environment variables out of version control
 .env
+node_modules/
 dist/
-prisma/clients/
+# generated files
+clients/
+index.js
+index.ts
