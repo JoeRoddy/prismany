@@ -1,13 +1,17 @@
+// "Prismas" or "Prismany"?
 import { execSync } from 'child_process';
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 
 const schemasDirPath = './prisma';
-const outputPath = 'node_modules/prismany';
+const outputPath = './node_modules/prismany';
 
 const generate = () => {
   //   execSync(`rm -rf ${outputPath}clients`);
   // delete output path using fs
-  //   unlinkSync(`${outputPath}/clients`);
+  deleteDirIfExists(`${outputPath}/clients`);
+  deleteFileIfExists(`${outputPath}.ts`);
+  deleteFileIfExists(`${outputPath}.js`);
+
   mkdirSync(`${outputPath}/clients/shared`, { recursive: true });
   const clientIndexPathTs = `${outputPath}/index.ts`;
   const clientIndexPathJs = `${outputPath}/index.js`;
@@ -45,8 +49,12 @@ const generate = () => {
           console.log(`Adding output directory to ${prismaFile}`);
         }
 
-        const prismaGenerateOutput = execSync(`npx prisma generate --schema ${schemasDirPath}/${prismaFile}`);
-        const clientPath = prismaGenerateOutput.toString().match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)?.[0];
+        const prismaGenerateOutput = execSync(
+          `npx prisma generate --schema ${schemasDirPath}/${prismaFile}`,
+        ).toString();
+        // console.log(prismaGenerateOutput);
+
+        const clientPath = prismaGenerateOutput.match(/(?<=to\s)(.+?)(?=\sin (.*)ms)/)?.[0];
         if (!clientPath) return console.error(`Error parsing client path from prisma generate output`);
 
         if (!sharedEngineCreated) {
@@ -55,7 +63,7 @@ const generate = () => {
           renameSync(`${clientPath}/${engineFile}`, enginePath);
           sharedEngineCreated = true;
         } else {
-          unlinkSync(`${clientPath}/${enginePath.split('/').pop()}`);
+          deleteFileIfExists(`${clientPath}/${enginePath.split('/').pop()}`);
         }
 
         if (!sharedRuntimeCreated) {
@@ -68,7 +76,7 @@ const generate = () => {
           writeFileSync(`${outputPath}/clients/shared/runtime/library.js`, newRuntimeLibContents);
           sharedRuntimeCreated = true;
         } else {
-          rmSync(`${clientPath}/runtime`, { recursive: true });
+          deleteDirIfExists(`${clientPath}/runtime`);
         }
 
         // change client/index.js references to runtime and engine to point to shared
@@ -127,3 +135,19 @@ const generate = () => {
 };
 
 export default generate;
+
+const deleteDirIfExists = (path: string) => {
+  try {
+    rmSync(path, { recursive: true });
+  } catch (err) {
+    // console.log('err deleting dir', err);
+  }
+};
+
+const deleteFileIfExists = (path: string) => {
+  try {
+    unlinkSync(path);
+  } catch (err) {
+    // console.log('err deleting file', err);
+  }
+};
