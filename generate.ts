@@ -26,12 +26,15 @@ const generate = () => {
     files
       .filter((f) => f.endsWith('.prisma'))
       .forEach((prismaFile) => {
-        if (prismaFile === 'schema.prisma') {
-          generateCount++;
+        // TODO: maybe allow a flag to skip schema.prisma, default to @prisma/client
+        // if (prismaFile === 'schema.prisma') {
+        //   generateCount++;
 
-          return execSync(`npx prisma generate`);
-        }
-        const schemaName = prismaFile.split('.')[0];
+        //   return execSync(`npx prisma generate`);
+        // }
+        let schemaName = prismaFile.split('.')[0];
+        schemaName = schemaName === 'schema' ? 'base_schema' : schemaName;
+
         const schemaContent = readFileSync(`${schemasDirPath}/${prismaFile}`).toString();
         const outputMatch = schemaContent.match(/(?<=output\s+=\s+")(.*)(?=")/);
         if (!outputMatch) {
@@ -77,7 +80,9 @@ const generate = () => {
         }
 
         // change client/index.js references to runtime and engine to point to shared
-        const customClientName = `PrismaClient${schemaName.charAt(0).toUpperCase() + schemaName.slice(1)}`;
+        const customClientName = `PrismaClient${
+          schemaName === 'base_schema' ? '' : schemaName.charAt(0).toUpperCase() + schemaName.slice(1)
+        }`;
         const indexFilePath = `${clientPath}/index.js`;
         const clientIndexContents = readFileSync(indexFilePath)
           .toString()
