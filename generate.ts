@@ -3,16 +3,13 @@ import { execSync } from 'child_process';
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 
 const schemasDirPath = './prisma';
-const outputPath = './node_modules/prismany';
+const outputPath = 'node_modules/@prismany/client';
 
 const generate = () => {
-  //   execSync(`rm -rf ${outputPath}clients`);
   // delete output path using fs
-  deleteDirIfExists(`${outputPath}/clients`);
-  deleteFileIfExists(`${outputPath}.ts`);
-  deleteFileIfExists(`${outputPath}.js`);
+  deleteDirIfExists(outputPath);
 
-  mkdirSync(`${outputPath}/clients/shared`, { recursive: true });
+  mkdirSync(`${outputPath}/shared`, { recursive: true });
   const clientIndexPathTs = `${outputPath}/index.ts`;
   const clientIndexPathJs = `${outputPath}/index.js`;
   writeFileSync(clientIndexPathJs, `module.exports = {\n\n}`);
@@ -43,7 +40,7 @@ const generate = () => {
           }
           const newSchemaContent = schemaContent.replace(
             /(generator client {)/,
-            `$1\n  output = "./clients/${schemaName}"`,
+            `$1\n  output = "../${outputPath}/${schemaName}"`,
           );
           writeFileSync(`${schemasDirPath}/${prismaFile}`, newSchemaContent);
           console.log(`Adding output directory to ${prismaFile}`);
@@ -59,7 +56,7 @@ const generate = () => {
 
         if (!sharedEngineCreated) {
           const engineFile = readdirSync(clientPath).find((f) => f.startsWith('libquery_engine-'));
-          enginePath = `${outputPath}/clients/shared/${engineFile}`;
+          enginePath = `${outputPath}/shared/${engineFile}`;
           renameSync(`${clientPath}/${engineFile}`, enginePath);
           sharedEngineCreated = true;
         } else {
@@ -67,13 +64,13 @@ const generate = () => {
         }
 
         if (!sharedRuntimeCreated) {
-          renameSync(`${clientPath}/runtime`, `${outputPath}/clients/shared/runtime`);
-          const runtimeLibContents = readFileSync(`${outputPath}/clients/shared/runtime/library.js`).toString();
+          renameSync(`${clientPath}/runtime`, `${outputPath}/shared/runtime`);
+          const runtimeLibContents = readFileSync(`${outputPath}/shared/runtime/library.js`).toString();
           const newRuntimeLibContents = runtimeLibContents.replace(
             /let \w+?={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}\[e\]\?\?t.prismaPath;/,
             `let r='${enginePath}';`,
           );
-          writeFileSync(`${outputPath}/clients/shared/runtime/library.js`, newRuntimeLibContents);
+          writeFileSync(`${outputPath}/shared/runtime/library.js`, newRuntimeLibContents);
           sharedRuntimeCreated = true;
         } else {
           deleteDirIfExists(`${clientPath}/runtime`);
@@ -90,7 +87,7 @@ const generate = () => {
             `path.join(__dirname, "../shared/${enginePath.split('/').pop()}");`,
           )
           .replaceAll(
-            /path\.join\(process\.cwd\(\), "prisma\/clients\/.+?\/libquery_engine-.+?\.dylib\.node"\)/g,
+            /path\.join\(process\.cwd\(\), "node_modules\/@prismany\/client\/.+?\/libquery_engine-.+?\.dylib\.node"\)/g,
             `path.join(__dirname, "${enginePath}");`,
           )
           // change client name so they're not all "PrismaClient"
@@ -111,7 +108,7 @@ const generate = () => {
 
         let dbIndexContentsTs = readFileSync(clientIndexPathTs).toString();
         dbIndexContentsTs =
-          `import {${customClientName}} from './clients/${schemaName}/index.js';\n${dbIndexContentsTs}`.replace(
+          `import {${customClientName}} from './${schemaName}/index.js';\n${dbIndexContentsTs}`.replace(
             /export {/g,
             `export {\n  ${customClientName},`,
           );
@@ -119,7 +116,7 @@ const generate = () => {
 
         let dbIndexContentsJs = readFileSync(clientIndexPathJs).toString();
         dbIndexContentsJs =
-          `const {${customClientName}} = require('./clients/${schemaName}/index.js');\n${dbIndexContentsJs}`.replace(
+          `const {${customClientName}} = require('./${schemaName}/index.js');\n${dbIndexContentsJs}`.replace(
             /module.exports\s?=\s?{/g,
             `module.exports = {\n  ${customClientName},`,
           );

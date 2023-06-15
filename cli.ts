@@ -8,8 +8,6 @@ program
   .command('generate')
   .description('Generates Prisma clients for every schema in the project')
   .action(() => {
-    console.log('hello world');
-
     console.log('Generating Prisma clients...');
 
     generate();
