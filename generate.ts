@@ -1,4 +1,3 @@
-// "Prismas" or "Prismany"?
 import { execSync } from 'child_process';
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 
@@ -6,7 +5,6 @@ const schemasDirPath = './prisma';
 const outputPath = 'node_modules/@prismany/client';
 
 const generate = () => {
-  // delete output path using fs
   deleteDirIfExists(outputPath);
 
   mkdirSync(`${outputPath}/shared`, { recursive: true });
@@ -21,7 +19,6 @@ const generate = () => {
   let generateCount = 0;
 
   try {
-    // Read all files in the directory
     const files = readdirSync(schemasDirPath);
     files
       .filter((f) => f.endsWith('.prisma'))
