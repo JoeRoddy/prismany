@@ -33,3 +33,19 @@ Query any number of databases with Prisma
 - Runs `prisma db push` against all of your schemas
 
 - If any `push` fails, or requires confirmation, the command will terminate and you'll need to push the individual schema manually: `npx prisma db push --schema=./prisma/myDb.prisma`
+
+### **Other**
+
+If you'd like to see other Prisma features supported, like `migrate`, please [open an issue](https://github.com/JoeRoddy/prismany/issues).
+
+## How it works
+
+This CLI takes an approach similar to [this wonderful answer](https://github.com/prisma/prisma/issues/2443#issuecomment-630679118) on Prisma's Github. It uses the `client.output` path in your Prisma schema to make sure clients don't overwrite each other.
+
+Prismany automates much of the manual effort involved in that approach, and crucially, reuses the same `engine` binary for all clients.
+
+This brings each client from a minimum of **15MB** down to just **80KB** each.
+
+## Example app
+
+https://github.com/JoeRoddy/prismany-example
