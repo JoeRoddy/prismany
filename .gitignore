@@ -1,7 +1,2 @@
-.env
 node_modules/
 dist/
-# generated files
-clients/
-index.js
-index.ts

@@ -15,7 +15,10 @@
     "prismany": "./dist/cli.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "https://github.com/JoeRoddy",
+  "repository": {
+    "url": "https://github.com/JoeRoddy/prismany"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.2.6",
