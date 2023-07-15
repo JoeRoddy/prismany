@@ -50,7 +50,9 @@ import { Prisma, MyModel } from '@prismany/client/db1';
 
 const db = new PrismaClientSomeDb1();
 
-const createModelInstance = (data: Prisma.MyModelCreateInput): MyModel => db.myModel.create({ data });
+const createModelInstance = (data: Prisma.MyModelCreateInput): Promise<MyModel> => {
+  return db.myModel.create({ data });
+};
 ```
 
 ## How it works
