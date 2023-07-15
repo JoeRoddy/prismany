@@ -38,6 +38,21 @@ Query any number of databases with Prisma
 
 If you'd like to see other Prisma features supported, like `migrate`, please [open an issue](https://github.com/JoeRoddy/prismany/issues).
 
+## Client Types
+
+You can access your model types, and ORM input types like so:
+
+```tsx
+// prisma client
+import { PrismaClientDb1 } from '@prismany/client';
+// advanced model, input types
+import { Prisma, MyModel } from '@prismany/client/db1';
+
+const db = new PrismaClientSomeDb1();
+
+const createModelInstance = (data: Prisma.MyModelCreateInput): MyModel => db.myModel.create({ data });
+```
+
 ## How it works
 
 This CLI takes an approach similar to [this wonderful answer](https://github.com/prisma/prisma/issues/2443#issuecomment-630679118) on Prisma's Github. It uses the `client.output` path in your Prisma schema to make sure clients don't overwrite each other.
