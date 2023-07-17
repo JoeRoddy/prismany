@@ -68,17 +68,16 @@ const generate = () => {
           deleteFileIfExists(`${clientPath}/${enginePath.split('/').pop()}`);
         }
 
-        if (USE_SHARED_RUNTIME && !sharedRuntimeCreated) {
-          renameSync(`${clientPath}/runtime`, `${outputPath}/shared/runtime`);
-          const runtimeLibContents = readFileSync(`${outputPath}/shared/runtime/library.js`).toString();
-          const newRuntimeLibContents = runtimeLibContents.replace(
-            /let \w+?={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}\[e\]\?\?t.prismaPath;/,
-            `let r='${enginePath}';`,
-          );
-          writeFileSync(`${outputPath}/shared/runtime/library.js`, newRuntimeLibContents);
-          sharedRuntimeCreated = true;
-        } else if (USE_SHARED_RUNTIME) {
-          deleteDirIfExists(`${clientPath}/runtime`);
+        if (USE_SHARED_RUNTIME) {
+          if (!sharedRuntimeCreated) {
+            renameSync(`${clientPath}/runtime`, `${outputPath}/shared/runtime`);
+            updateEnginePathInRuntime(enginePath, `${outputPath}/shared/runtime/library.js`);
+            sharedRuntimeCreated = true;
+          } else {
+            deleteDirIfExists(`${clientPath}/runtime`);
+          }
+        } else {
+          updateEnginePathInRuntime(enginePath, `${clientPath}/runtime/library.js`);
         }
 
         // change client/index.js references to runtime and engine to point to shared
@@ -158,4 +157,13 @@ const deleteFileIfExists = (path: string) => {
   } catch (err) {
     // console.log('err deleting file', err);
   }
+};
+
+const updateEnginePathInRuntime = (enginePath: string, runtimePath: string) => {
+  const runtimeLibContents = readFileSync(runtimePath).toString();
+  const newRuntimeLibContents = runtimeLibContents.replace(
+    /let \w+?={binary:process.env.PRISMA_QUERY_ENGINE_BINARY,library:process.env.PRISMA_QUERY_ENGINE_LIBRARY}\[e\]\?\?t.prismaPath;/,
+    `let r='${enginePath}';`,
+  );
+  writeFileSync(runtimePath, newRuntimeLibContents);
 };
