@@ -3,7 +3,7 @@ import { program } from 'commander';
 import generate from './generate';
 import push from './push';
 
-program.version('1.0.0');
+program.version('1.0.2');
 
 program
   .command('generate')
