@@ -48,7 +48,7 @@ import { PrismaClientDb1 } from '@prismany/client';
 // advanced model, input types
 import { Prisma, MyModel } from '@prismany/client/db1';
 
-const db = new PrismaClientSomeDb1();
+const db = new PrismaClientDb1();
 
 const createModelInstance = (data: Prisma.MyModelCreateInput): Promise<MyModel> => {
   return db.myModel.create({ data });
