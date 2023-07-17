@@ -4,6 +4,11 @@ import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, w
 const schemasDirPath = './prisma';
 const outputPath = 'node_modules/@prismany/client';
 
+// reusing the same runtime works fine, but it breaks the return type for findMany.
+// becomes runtime.Types.Public.PrismaPromise<T> instead of SomeModel[]
+// disable for now, but there should be a way to reuse most of this.  Costs about 460kb per client
+const USE_SHARED_RUNTIME = false;
+
 const generate = () => {
   deleteDirIfExists(outputPath);
 
@@ -63,7 +68,7 @@ const generate = () => {
           deleteFileIfExists(`${clientPath}/${enginePath.split('/').pop()}`);
         }
 
-        if (!sharedRuntimeCreated) {
+        if (USE_SHARED_RUNTIME && !sharedRuntimeCreated) {
           renameSync(`${clientPath}/runtime`, `${outputPath}/shared/runtime`);
           const runtimeLibContents = readFileSync(`${outputPath}/shared/runtime/library.js`).toString();
           const newRuntimeLibContents = runtimeLibContents.replace(
@@ -72,7 +77,7 @@ const generate = () => {
           );
           writeFileSync(`${outputPath}/shared/runtime/library.js`, newRuntimeLibContents);
           sharedRuntimeCreated = true;
-        } else {
+        } else if (USE_SHARED_RUNTIME) {
           deleteDirIfExists(`${clientPath}/runtime`);
         }
 
@@ -81,9 +86,8 @@ const generate = () => {
           schemaName === 'base_schema' ? '' : schemaName.charAt(0).toUpperCase() + schemaName.slice(1)
         }`;
         const indexFilePath = `${clientPath}/index.js`;
-        const clientIndexContents = readFileSync(indexFilePath)
+        let clientIndexContents = readFileSync(indexFilePath)
           .toString()
-          .replaceAll(/\.\/runtime/g, '../shared/runtime')
           .replaceAll(
             /path\.join\(__dirname, "libquery_engine-.+?\.dylib\.node"\);/g,
             `path.join(__dirname, "../shared/${enginePath.split('/').pop()}");`,
@@ -95,6 +99,11 @@ const generate = () => {
           // change client name so they're not all "PrismaClient"
           .replaceAll(/const PrismaClient =/g, `const ${customClientName} =`)
           .replaceAll(/exports\.PrismaClient = PrismaClient/g, `exports.${customClientName} = ${customClientName}`);
+
+        clientIndexContents = USE_SHARED_RUNTIME
+          ? clientIndexContents.replaceAll(/\.\/runtime/g, '../shared/runtime')
+          : clientIndexContents;
+
         writeFileSync(indexFilePath, clientIndexContents);
 
         // mirror custom client name from index.js to index.d.ts

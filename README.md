@@ -61,7 +61,7 @@ This CLI takes an approach similar to [this wonderful answer](https://github.com
 
 Prismany automates much of the manual effort involved in that approach, and crucially, reuses the same `engine` binary for all clients.
 
-This brings each client from a minimum of **15MB** down to just **80KB** each.
+This brings each client from a minimum of **15MB** down to just **460kB** each.
 
 ## Example app
 
